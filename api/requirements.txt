@@ -3,3 +3,6 @@ Flask-Cors
 pandas
 xgboost
 joblib
+openai
+python-dotenv
+sqlite3

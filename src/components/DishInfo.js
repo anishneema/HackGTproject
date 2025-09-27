@@ -47,11 +47,19 @@ const DishInfo = ({ formData, handleInputChange, handleCheckboxChange }) => {
           required
         />
         <FormInput
-          label="Major Ingredients (Optional)"
+          label="Ingredients & Measurements (Optional)"
           value={formData.majorIngredients}
           onChange={(e) => handleInputChange('majorIngredients', e.target.value)}
-          placeholder="e.g., chicken, rice, vegetables"
+          placeholder="e.g., 2 lbs chicken breast, 1 cup rice, 3 tomatoes, 1/2 cup cheese"
         />
+        <div className="ingredient-help-text">
+          <small>
+            💡 <strong>Tip:</strong> Include measurements for better analysis! 
+            If you don't have a specific dish name, just list ingredients with quantities 
+            (e.g., "2 lbs chicken, 1 cup rice, 3 tomatoes"). The AI will calculate 
+            the total amounts needed for your predicted orders.
+          </small>
+        </div>
       </div>
 
       <div className="form-row">

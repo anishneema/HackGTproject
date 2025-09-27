@@ -41,8 +41,39 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate bot response delay
-    setTimeout(() => {
+    try {
+      // Call OpenAI API for intelligent response
+      const response = await fetch("http://127.0.0.1:5000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: message,
+          context: {
+            // Add any relevant context here
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get AI response");
+      }
+
+      const result = await response.json();
+      const botResponse = result.response || generateBotResponse(message);
+      
+      const botMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: botResponse,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      // Fallback to local response generation
       const botResponse = generateBotResponse(message);
       const botMessage = {
         id: Date.now() + 1,
@@ -52,8 +83,9 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
       };
       
       setMessages(prev => [...prev, botMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const generateBotResponse = (userMessage) => {
