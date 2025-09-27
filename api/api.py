@@ -11,7 +11,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)   
 
 # Load environment variables
 load_dotenv()
@@ -63,6 +63,10 @@ def predict():
         discount = False
         print(discount_applied)
         discount_amount = 0
+        center_type = data.get("centerType", "")
+        center_type_A = 1 if center_type == "TYPE_A" else 0
+        center_type_B = 1 if center_type == "TYPE_B" else 0
+        center_type_C = 1 if center_type == "TYPE_C" else 0
         if discount_applied:
             discount_percentage = float(data.get("discountPercentage", 0))
             discount_amount = dish_price * (discount_percentage / 100)
@@ -77,31 +81,29 @@ def predict():
         
 
         df = pd.DataFrame([{
-            "base_price": float(data.get("dishPrice", 0)),
             "checkout_price": final_price,
-            "category": data.get("category", ""),
-            "cuisine": data.get("cuisine", ""),
+            "base_price": float(data.get("dishPrice", 0)),
             "emailer_for_promotion": int(data.get("emailedInPromotions", True) == True),
             "homepage_featured": int(data.get("featuredOnHomepage", True) == True),
+            "category": data.get("category", ""),
+            "cuisine": data.get("cuisine", ""),
             "discount amount": discount_amount,
             "discount percent": discount_percentage,
-            "center_type": data.get("centerType", ""),
-            "discount y/n": discount
+            "discount y/n": discount,
+            "center_type_TYPE_A": center_type_A,
+            "center_type_TYPE_B": center_type_B,
+            "center_type_TYPE_C": center_type_C,
         }])
         df["cuisine"] = df["cuisine"].astype("category")
         df["category"] = df["category"].astype("category")
-        df["center_type"] = df["center_type"].astype("category")
-        df = df[['checkout_price', 'base_price', 'emailer_for_promotion', 'homepage_featured',
-         'center_type', 'category', 'cuisine', 'discount amount', 'discount percent', 'discount y/n']]
 
 
     except Exception as e:
         print("Prediction error:", e)
         return jsonify({"error": str(e)}), 500
-    print(df['center_type'])
     pred = model.predict(df)
-    predicted_orders = round(float(pred[0]))
-    
+    scale_factor = 1 / (dish_price / 10 + 1)  
+    predicted_orders = round(float(pred[0]) * scale_factor)    
     # Save to database
     conn = sqlite3.connect('demand_history.db')
     cursor = conn.cursor()
