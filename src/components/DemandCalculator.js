@@ -5,14 +5,10 @@ import RestaurantInfo from './RestaurantInfo';
 import FormInput from './FormInput';
 import './DemandCalculator.css';
 
-<<<<<<< HEAD
-const DemandCalculator = ({ currentPage, onPageChange }) => {
-=======
 
 
 const DemandCalculator = () => {
   const [predictedOrders, setPredictedOrders] = useState(null);
->>>>>>> f621c16 (model is added)
   const [formData, setFormData] = useState({
     // Dish Info
     dishPrice: '',
