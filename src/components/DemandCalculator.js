@@ -55,12 +55,7 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
       <main className="main-content">
         <div className="container">
           <div className="page-header">
-            <h1 className="page-title">Demand Calculator</h1>
-            <p className="page-description">
-              Calculates total orders for your restaurant for the next 10 weeks. 
-              This information can be used to generate a breakdown of what ingredients 
-              to buy, and when, to minimize food waste.
-            </p>
+            <h1 className="page-title">Order Optimization</h1>
           </div>
 
           <div className="form-container">

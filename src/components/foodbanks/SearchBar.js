@@ -33,7 +33,7 @@ const SearchBar = ({ onSearch }) => {
             type="text"
             value={query}
             onChange={handleInputChange}
-            placeholder="Search food banks by name, location, or services..."
+            placeholder="Search donation hubs by name, location, or services..."
             className="search-input"
           />
           {query && (

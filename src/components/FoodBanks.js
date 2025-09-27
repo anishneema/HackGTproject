@@ -182,9 +182,9 @@ const FoodBanks = ({ currentPage, onPageChange }) => {
       <main className="main-content">
         <div className="container">
           <div className="page-header">
-            <h1 className="page-title">Food Banks</h1>
+            <h1 className="page-title">Donations</h1>
             <p className="page-description">
-              Find local food banks to donate surplus food and reduce waste. 
+              Find local donation hubs to donate surplus food and reduce waste. 
               Help feed your community while getting tax benefits and recognition.
             </p>
           </div>
@@ -197,7 +197,7 @@ const FoodBanks = ({ currentPage, onPageChange }) => {
           <div className="results-section">
             <div className="results-header">
               <h2 className="results-title">
-                {isLoading ? 'Searching...' : `${filteredFoodBanks.length} Food Banks Found`}
+                {isLoading ? 'Searching...' : `${filteredFoodBanks.length} Donation Hubs Found`}
               </h2>
               {searchQuery && (
                 <p className="search-query">Results for "{searchQuery}"</p>
@@ -213,7 +213,7 @@ const FoodBanks = ({ currentPage, onPageChange }) => {
                 ))
               ) : (
                 <div className="no-results">
-                  <h3>No food banks found</h3>
+                  <h3>No donation hubs found</h3>
                   <p>Try adjusting your search criteria or filters</p>
                 </div>
               )}

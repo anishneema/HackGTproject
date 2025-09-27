@@ -34,7 +34,7 @@ const PieChart = () => {
 
   return (
     <div className="pie-chart-container">
-      <h3 className="chart-title">Pi-chart - weekly view</h3>
+      <h3 className="chart-title">Week's Trends</h3>
       <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height={300}>
           <RechartsPieChart>

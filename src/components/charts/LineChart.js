@@ -18,7 +18,7 @@ const LineChart = () => {
 
   return (
     <div className="line-chart-container">
-      <h3 className="chart-title">money wasted</h3>
+      <h3 className="chart-title">Financial Optimization</h3>
       <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height={300}>
           <RechartsLineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
