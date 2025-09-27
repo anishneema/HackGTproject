@@ -77,3 +77,9 @@ jspm_packages/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+demand_history.db
