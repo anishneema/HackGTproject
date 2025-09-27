@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import DemandCalculator from './components/DemandCalculator';
+import InventoryBot from './components/InventoryBot';
 import FoodBanks from './components/FoodBanks';
 import './App.css';
 
@@ -13,6 +14,8 @@ function App() {
         return <AnalyticsDashboard currentPage={currentPage} onPageChange={setCurrentPage} />;
       case 'demand':
         return <DemandCalculator currentPage={currentPage} onPageChange={setCurrentPage} />;
+      case 'chatbot':
+        return <InventoryBot currentPage={currentPage} onPageChange={setCurrentPage} />;
       case 'food-banks':
         return <FoodBanks currentPage={currentPage} onPageChange={setCurrentPage} />;
       default:
