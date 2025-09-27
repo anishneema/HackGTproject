@@ -2,9 +2,17 @@ import React, { useState } from 'react';
 import Header from './Header';
 import DishInfo from './DishInfo';
 import RestaurantInfo from './RestaurantInfo';
+import FormInput from './FormInput';
 import './DemandCalculator.css';
 
+<<<<<<< HEAD
 const DemandCalculator = ({ currentPage, onPageChange }) => {
+=======
+
+
+const DemandCalculator = () => {
+  const [predictedOrders, setPredictedOrders] = useState(null);
+>>>>>>> f621c16 (model is added)
   const [formData, setFormData] = useState({
     // Dish Info
     dishPrice: '',
@@ -16,8 +24,6 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
     featuredOnHomepage: true,
     discountApplied: true,
     discountPercentage: '',
-    
-    // Restaurant Info
     cityName: '',
     centerType: ''
   });
@@ -36,12 +42,31 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
     }));
   };
 
-  const handleCalculateDemand = () => {
-    // TODO: Implement demand calculation logic
-    console.log('Calculating demand with data:', formData);
-    alert('Demand calculation feature coming soon!');
-  };
+  const handleCalculateDemand = async () => {
+    
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/ml", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to calculate demand");
+      }
+      const result = await response.json();
+      console.log("Predicted orders:", result.predictedOrders);
+      alert(`Predicted orders: ${result.predictedOrders}`);
+      setPredictedOrders(result.predictedOrders);
+    }
+    catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong while calculating demand.");
+    }
+ 
+  } 
   const handleChatWithAI = () => {
     // TODO: Implement AI chat functionality
     console.log('Opening AI chat');
@@ -84,6 +109,11 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
                 Chat with AI
               </button>
             </div>
+            {predictedOrders !== null && (
+              <div className="prediction-result">
+                <h3>Predicted Orders: {predictedOrders}</h3>
+              </div>
+            )}
           </div>
         </div>
       </main>

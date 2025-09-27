@@ -71,6 +71,7 @@ const DishInfo = ({ formData, handleInputChange, handleCheckboxChange }) => {
           placeholder="Select cuisine"
           required
         />
+        
       </div>
 
       <div className="checkbox-group">
@@ -103,6 +104,7 @@ const DishInfo = ({ formData, handleInputChange, handleCheckboxChange }) => {
           />
         </div>
       )}
+
     </div>
   );
 };
