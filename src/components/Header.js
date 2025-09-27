@@ -1,7 +1,12 @@
 import React from 'react';
 import './Header.css';
 
-const Header = () => {
+const Header = ({ currentPage, onPageChange }) => {
+  const handleNavClick = (page, e) => {
+    e.preventDefault();
+    onPageChange(page);
+  };
+
   return (
     <header className="header">
       <div className="header-container">
@@ -16,9 +21,34 @@ const Header = () => {
         </div>
         
         <nav className="navigation">
-          <a href="/" className="nav-link">Home</a>
-          <a href="/demand" className="nav-link active">Demand</a>
-          <a href="/food-banks" className="nav-link">Food Banks</a>
+          <a 
+            href="/" 
+            className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`}
+            onClick={(e) => handleNavClick('dashboard', e)}
+          >
+            Home
+          </a>
+          <a 
+            href="/dashboard" 
+            className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`}
+            onClick={(e) => handleNavClick('dashboard', e)}
+          >
+            Dashboard
+          </a>
+          <a 
+            href="/demand" 
+            className={`nav-link ${currentPage === 'demand' ? 'active' : ''}`}
+            onClick={(e) => handleNavClick('demand', e)}
+          >
+            Demand
+          </a>
+          <a 
+            href="/food-banks" 
+            className={`nav-link ${currentPage === 'food-banks' ? 'active' : ''}`}
+            onClick={(e) => handleNavClick('food-banks', e)}
+          >
+            Food Banks
+          </a>
         </nav>
       </div>
     </header>

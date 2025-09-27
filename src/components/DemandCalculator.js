@@ -4,7 +4,7 @@ import DishInfo from './DishInfo';
 import RestaurantInfo from './RestaurantInfo';
 import './DemandCalculator.css';
 
-const DemandCalculator = () => {
+const DemandCalculator = ({ currentPage, onPageChange }) => {
   const [formData, setFormData] = useState({
     // Dish Info
     dishPrice: '',
@@ -50,7 +50,7 @@ const DemandCalculator = () => {
 
   return (
     <div className="demand-calculator">
-      <Header />
+      <Header currentPage={currentPage} onPageChange={onPageChange} />
       
       <main className="main-content">
         <div className="container">
