@@ -7,7 +7,7 @@ import './DemandCalculator.css';
 
 
 
-const DemandCalculator = () => {
+const DemandCalculator = ({ currentPage, onPageChange }) => {
   const [predictedOrders, setPredictedOrders] = useState(null);
   const [formData, setFormData] = useState({
     // Dish Info
