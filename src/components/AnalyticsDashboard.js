@@ -14,7 +14,7 @@ const AnalyticsDashboard = ({ currentPage, onPageChange }) => {
       <main className="main-content">
         <div className="container">
           <div className="page-header">
-            <h1 className="page-title">Display Analytics</h1>
+            <h1 className="page-title">Dashboard</h1>
           </div>
 
           <div className="charts-section">

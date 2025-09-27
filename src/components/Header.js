@@ -22,13 +22,6 @@ const Header = ({ currentPage, onPageChange }) => {
         
         <nav className="navigation">
           <a 
-            href="/" 
-            className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`}
-            onClick={(e) => handleNavClick('dashboard', e)}
-          >
-            Home
-          </a>
-          <a 
             href="/dashboard" 
             className={`nav-link ${currentPage === 'dashboard' ? 'active' : ''}`}
             onClick={(e) => handleNavClick('dashboard', e)}
