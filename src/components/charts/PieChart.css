@@ -24,6 +24,17 @@
   justify-content: center;
 }
 
+.loading-message, .error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.error-message {
+  color: #ef4444;
+}
+
 @media (max-width: 768px) {
   .pie-chart-container {
     padding: 1rem;

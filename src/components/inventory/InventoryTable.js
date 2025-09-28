@@ -94,6 +94,10 @@ const InventoryTable = ({ onTransactionAdd, onItemUpdate, aiActions, onAiAction 
         await fetchInventory();
         setShowTransactionForm(false);
         setSelectedItem(null);
+        
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+        
         alert('Transaction recorded successfully!');
       } else {
         alert('Failed to record transaction');
@@ -523,7 +527,27 @@ const TransactionForm = ({ item, onTransaction, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onTransaction(item.id, formData);
+    
+    // Validation
+    if (formData.quantity <= 0) {
+      alert('Please enter a valid quantity greater than 0');
+      return;
+    }
+    
+    if (formData.type !== 'purchase' && formData.quantity > item.current_quantity) {
+      alert(`Cannot ${formData.type} more than current quantity (${item.current_quantity} ${item.unit})`);
+      return;
+    }
+    
+    // Convert frontend form data to backend expected format
+    const transactionData = {
+      transaction_type: formData.type,
+      quantity: formData.quantity,
+      cost: formData.cost,
+      notes: formData.notes,
+      date: formData.date
+    };
+    onTransaction(item.id, transactionData);
   };
 
   return (
@@ -531,33 +555,47 @@ const TransactionForm = ({ item, onTransaction, onClose }) => {
       <div className="modal-content">
         <h3>Record Transaction - {item.name}</h3>
         <form onSubmit={handleSubmit}>
-          <div className="form-row">
+          <div className="form-group">
+            <label>Transaction Type:</label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({...formData, type: e.target.value})}
+              required
             >
-              <option value="usage">Usage</option>
-              <option value="waste">Waste</option>
-              <option value="purchase">Purchase</option>
-              <option value="donation">Donation</option>
+              <option value="usage">Usage (Used in cooking/service)</option>
+              <option value="waste">Waste (Expired/Damaged/Spoiled)</option>
+              <option value="purchase">Purchase (New stock added)</option>
+              <option value="donation">Donation (Donated to food bank)</option>
             </select>
+          </div>
+          
+          <div className="form-group">
+            <label>Quantity ({item.unit}):</label>
             <input
               type="number"
               step="0.01"
-              placeholder="Quantity"
-              value={formData.quantity}
+              min="0"
+              placeholder={`Enter quantity in ${item.unit}`}
+              value={formData.quantity || ''}
               onChange={(e) => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})}
               required
             />
           </div>
-          <div className="form-row">
+          
+          <div className="form-group">
+            <label>Cost ($):</label>
             <input
               type="number"
               step="0.01"
-              placeholder="Cost (if applicable)"
-              value={formData.cost}
+              min="0"
+              placeholder="Enter cost (optional)"
+              value={formData.cost || ''}
               onChange={(e) => setFormData({...formData, cost: parseFloat(e.target.value) || 0})}
             />
+          </div>
+          
+          <div className="form-group">
+            <label>Date:</label>
             <input
               type="date"
               value={formData.date}
@@ -565,11 +603,14 @@ const TransactionForm = ({ item, onTransaction, onClose }) => {
               required
             />
           </div>
-          <div className="form-row">
+          
+          <div className="form-group">
+            <label>Notes (Optional):</label>
             <textarea
-              placeholder="Notes"
+              placeholder="Add any additional notes about this transaction"
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              rows="3"
             />
           </div>
           <div className="form-actions">
@@ -601,103 +642,212 @@ const EditItemForm = ({ item, onUpdate, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.name.trim()) {
+      alert('Item name is required');
+      return;
+    }
+    
+    if (formData.current_quantity < 0) {
+      alert('Current quantity cannot be negative');
+      return;
+    }
+    
+    if (formData.min_quantity < 0 || formData.max_quantity < 0) {
+      alert('Min and max quantities cannot be negative');
+      return;
+    }
+    
+    if (formData.min_quantity > formData.max_quantity) {
+      alert('Min quantity cannot be greater than max quantity');
+      return;
+    }
+    
     onUpdate(item.id, formData);
   };
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
-        <h3>Edit Item - {item.name}</h3>
+      <div className="modal-content edit-modal">
+        <div className="modal-header">
+          <h3>Edit Item - {item.name}</h3>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        
         <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Item name"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              required
-            />
-            <input
-              type="text"
-              placeholder="Category"
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-            />
+          <div className="form-section">
+            <h4>Basic Information</h4>
+            <div className="form-group">
+              <label>Item Name *</label>
+              <input
+                type="text"
+                placeholder="Enter item name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({...formData, category: e.target.value})}
+              >
+                <option value="">Select category</option>
+                <option value="Protein">Protein</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Spices">Spices</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Unit</label>
+              <select
+                value={formData.unit}
+                onChange={(e) => setFormData({...formData, unit: e.target.value})}
+              >
+                <option value="">Select unit</option>
+                <option value="lbs">Pounds (lbs)</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="cups">Cups</option>
+                <option value="pieces">Pieces</option>
+                <option value="liters">Liters</option>
+                <option value="gallons">Gallons</option>
+                <option value="boxes">Boxes</option>
+                <option value="bags">Bags</option>
+                <option value="cans">Cans</option>
+                <option value="bottles">Bottles</option>
+              </select>
+            </div>
           </div>
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Unit (lbs, cups, etc.)"
-              value={formData.unit}
-              onChange={(e) => setFormData({...formData, unit: e.target.value})}
-            />
-            <input
-              type="number"
-              placeholder="Current quantity"
-              value={formData.current_quantity}
-              onChange={(e) => setFormData({...formData, current_quantity: parseFloat(e.target.value) || 0})}
-            />
+
+          <div className="form-section">
+            <h4>Quantity Management</h4>
+            <div className="form-group">
+              <label>Current Quantity ({formData.unit})</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Enter current quantity"
+                value={formData.current_quantity || ''}
+                onChange={(e) => setFormData({...formData, current_quantity: parseFloat(e.target.value) || 0})}
+                required
+              />
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label>Min Quantity ({formData.unit})</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Minimum stock level"
+                  value={formData.min_quantity || ''}
+                  onChange={(e) => setFormData({...formData, min_quantity: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Max Quantity ({formData.unit})</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Maximum stock level"
+                  value={formData.max_quantity || ''}
+                  onChange={(e) => setFormData({...formData, max_quantity: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+            </div>
           </div>
-          <div className="form-row">
-            <input
-              type="number"
-              placeholder="Min quantity"
-              value={formData.min_quantity}
-              onChange={(e) => setFormData({...formData, min_quantity: parseFloat(e.target.value) || 0})}
-            />
-            <input
-              type="number"
-              placeholder="Max quantity"
-              value={formData.max_quantity}
-              onChange={(e) => setFormData({...formData, max_quantity: parseFloat(e.target.value) || 0})}
-            />
+
+          <div className="form-section">
+            <h4>Cost Information</h4>
+            <div className="form-row cost-row">
+              <div className="form-group">
+                <label>Cost per Unit ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Enter cost per unit"
+                  value={formData.cost_per_unit || ''}
+                  onChange={(e) => setFormData({...formData, cost_per_unit: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Total Value ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Total value"
+                  value={formData.total_cost || ''}
+                  onChange={(e) => setFormData({...formData, total_cost: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+            </div>
           </div>
-          <div className="form-row cost-row">
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Cost per unit ($)"
-              value={formData.cost_per_unit}
-              onChange={(e) => setFormData({...formData, cost_per_unit: parseFloat(e.target.value) || 0})}
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Total cost ($)"
-              value={formData.total_cost}
-              onChange={(e) => setFormData({...formData, total_cost: parseFloat(e.target.value) || 0})}
-            />
+
+          <div className="form-section">
+            <h4>Additional Information</h4>
+            <div className="form-group">
+              <label>Supplier</label>
+              <input
+                type="text"
+                placeholder="Enter supplier name"
+                value={formData.supplier || ''}
+                onChange={(e) => setFormData({...formData, supplier: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Expiration Date</label>
+              <input
+                type="date"
+                value={formData.expiration_date || ''}
+                onChange={(e) => setFormData({...formData, expiration_date: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Storage Location</label>
+              <select
+                value={formData.storage_location || ''}
+                onChange={(e) => setFormData({...formData, storage_location: e.target.value})}
+              >
+                <option value="">Select storage location</option>
+                <option value="Refrigerator">Refrigerator</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Dry Storage">Dry Storage</option>
+                <option value="Cooler">Cooler</option>
+                <option value="Room Temperature">Room Temperature</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Notes</label>
+              <textarea
+                placeholder="Add any additional notes about this item"
+                value={formData.notes || ''}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                rows="3"
+              />
+            </div>
           </div>
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Supplier"
-              value={formData.supplier}
-              onChange={(e) => setFormData({...formData, supplier: e.target.value})}
-            />
-            <input
-              type="date"
-              placeholder="Expiration date"
-              value={formData.expiration_date}
-              onChange={(e) => setFormData({...formData, expiration_date: e.target.value})}
-            />
-          </div>
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Storage location"
-              value={formData.storage_location}
-              onChange={(e) => setFormData({...formData, storage_location: e.target.value})}
-            />
-            <textarea
-              placeholder="Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
-            />
-          </div>
+          
           <div className="form-actions">
-            <button type="button" onClick={onClose}>Cancel</button>
-            <button type="submit">Update Item</button>
+            <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="submit-btn">Update Item</button>
           </div>
         </form>
       </div>

@@ -104,11 +104,6 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
       setIsAnalyzingIngredients(false);
     }
   } 
-  const handleChatWithAI = () => {
-    // TODO: Implement AI chat functionality
-    console.log('Opening AI chat');
-    alert('AI chat feature coming soon!');
-  };
 
   return (
     <div className="demand-calculator">
@@ -138,12 +133,6 @@ const DemandCalculator = ({ currentPage, onPageChange }) => {
                 onClick={handleCalculateDemand}
               >
                 Calculate Demand
-              </button>
-              <button 
-                className="btn btn-secondary"
-                onClick={handleChatWithAI}
-              >
-                Chat with AI
               </button>
             </div>
             {predictedOrders !== null && (

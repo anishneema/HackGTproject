@@ -7,38 +7,51 @@ const BarChart = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchWeeklyTrends = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:5000/api/analytics/weekly-trends');
-        if (response.ok) {
-          const chartData = await response.json();
-          setData(chartData);
-        } else {
-          throw new Error('Failed to fetch weekly trends data');
-        }
-      } catch (err) {
-        console.error('Error fetching weekly trends:', err);
-        setError(err.message);
-        // Fallback to sample data if API fails
-        setData([
-          { week: 'Week 1', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 2', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 3', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 4', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 5', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 6', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 7', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 8', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 9', used: 0, wasted: 0, donated: 0, total: 0 },
-          { week: 'Week 10', used: 0, wasted: 0, donated: 0, total: 0 }
-        ]);
-      } finally {
-        setLoading(false);
+  const fetchWeeklyTrends = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/analytics/weekly-trends');
+      if (response.ok) {
+        const chartData = await response.json();
+        setData(chartData);
+      } else {
+        throw new Error('Failed to fetch weekly trends data');
       }
+    } catch (err) {
+      console.error('Error fetching weekly trends:', err);
+      setError(err.message);
+      // Fallback to sample data if API fails (reversed order: oldest to newest)
+      setData([
+        { week: 'Week -9', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -8', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -7', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -6', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -5', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -4', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -3', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -2', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Week -1', used: 0, wasted: 0, donated: 0, total: 0 },
+        { week: 'Current Week', used: 0, wasted: 0, donated: 0, total: 0 }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeeklyTrends();
+  }, []);
+
+  // Listen for inventory updates
+  useEffect(() => {
+    const handleInventoryUpdate = () => {
+      fetchWeeklyTrends();
     };
 
-    fetchWeeklyTrends();
+    window.addEventListener('inventoryUpdated', handleInventoryUpdate);
+
+    return () => {
+      window.removeEventListener('inventoryUpdated', handleInventoryUpdate);
+    };
   }, []);
 
   if (loading) {
@@ -65,7 +78,7 @@ const BarChart = () => {
 
   return (
     <div className="bar-chart-container">
-      <h3 className="chart-title">Long Term Trends (Last 10 Weeks)</h3>
+      <h3 className="chart-title">Weekly Trends (Week -9 → Current Week)</h3>
       <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height={300}>
           <RechartsBarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>

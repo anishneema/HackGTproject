@@ -52,23 +52,18 @@ const PastDemandChart = () => {
               : item
           )
         );
-        alert(`Demand recalculated! New prediction: ${result.predictedOrders} orders (next 10 weeks)`);
+        // Demand recalculated successfully
       } else {
-        alert('Failed to recalculate demand');
+        console.error('Failed to recalculate demand');
       }
     } catch (error) {
       console.error('Error recalculating demand:', error);
-      alert('Error recalculating demand');
     } finally {
       setRecalculating(prev => ({ ...prev, [calculationId]: false }));
     }
   };
 
   const handleDelete = async (calculationId) => {
-    if (!window.confirm('Are you sure you want to delete this demand calculation? This action cannot be undone.')) {
-      return;
-    }
-
     setDeleting(prev => ({ ...prev, [calculationId]: true }));
     
     try {
@@ -84,14 +79,13 @@ const PastDemandChart = () => {
         setDemandHistory(prev => 
           prev.filter(item => item.id !== calculationId)
         );
-        alert('Demand calculation deleted successfully!');
+        // Demand calculation deleted successfully
       } else {
         const errorData = await response.json();
-        alert(`Failed to delete calculation: ${errorData.error || 'Unknown error'}`);
+        console.error(`Failed to delete calculation: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting calculation:', error);
-      alert('Error deleting calculation');
     } finally {
       setDeleting(prev => ({ ...prev, [calculationId]: false }));
     }

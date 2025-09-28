@@ -56,6 +56,7 @@
   width: 100%;
   border-collapse: collapse;
   background-color: #ffffff;
+  table-layout: fixed;
 }
 
 .inventory-table thead {
@@ -65,24 +66,39 @@
 
 .inventory-table th {
   padding: 0 0.25rem;
-  text-align: left;
   font-weight: 600;
   color: #374151;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  height: 16px;
-  line-height: 0.9;
+  height: 20px;
+  line-height: 1.2;
 }
+
+/* Center align all headers */
+.inventory-table th {
+  text-align: center;
+}
+
+/* Column width specifications */
+.inventory-table th:nth-child(1), .inventory-table td:nth-child(1) { width: 20%; } /* Item */
+.inventory-table th:nth-child(2), .inventory-table td:nth-child(2) { width: 12%; } /* Category */
+.inventory-table th:nth-child(3), .inventory-table td:nth-child(3) { width: 12%; } /* Current Qty */
+.inventory-table th:nth-child(4), .inventory-table td:nth-child(4) { width: 12%; } /* Min/Max */
+.inventory-table th:nth-child(5), .inventory-table td:nth-child(5) { width: 12%; } /* Cost per Unit */
+.inventory-table th:nth-child(6), .inventory-table td:nth-child(6) { width: 12%; } /* Total Value */
+.inventory-table th:nth-child(7), .inventory-table td:nth-child(7) { width: 10%; } /* Expires */
+.inventory-table th:nth-child(8), .inventory-table td:nth-child(8) { width: 10%; } /* Status */
+.inventory-table th:nth-child(9), .inventory-table td:nth-child(9) { width: 10%; } /* Actions */
 
 .inventory-table td {
   padding: 0 0.25rem;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
   font-size: 0.8rem;
-  height: 16px;
-  line-height: 0.9;
+  height: 20px;
+  line-height: 1.2;
   margin: 0;
 }
 
@@ -113,6 +129,7 @@
 .item-name {
   min-width: 150px;
   max-width: 200px;
+  text-align: center;
 }
 
 .name-cell strong {
@@ -142,6 +159,7 @@
   color: #1e40af;
   text-transform: capitalize;
   line-height: 0.9;
+  text-align: center;
 }
 
 .quantity {
@@ -167,6 +185,7 @@
 .min-max-cell {
   font-size: 0.7rem;
   line-height: 0.9;
+  text-align: center;
 }
 
 .min, .max {
@@ -185,12 +204,16 @@
 }
 
 .cost-per-unit, .total-value {
-  text-align: right;
+  text-align: center;
   font-weight: 600;
   color: #059669;
-  min-width: 60px;
   font-size: 0.75rem;
-  line-height: 0.9;
+  line-height: 1.2;
+}
+
+/* Center align all data cells */
+.inventory-table td {
+  text-align: center;
 }
 
 .expiration {
@@ -258,9 +281,9 @@
   padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.65rem;
-  min-width: 14px;
-  height: 14px;
+  font-size: 0.8rem;
+  min-width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,6 +343,136 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
+.edit-modal {
+  max-width: 800px;
+  width: 95%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1e40af;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.form-section h4 {
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group select {
+  cursor: pointer;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.cancel-btn {
+  background-color: #6b7280;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #4b5563;
+}
+
+.submit-btn {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+  background-color: #2563eb;
+}
+
 .modal-content h3 {
   color: #1e40af;
   font-size: 1.5rem;
@@ -368,6 +521,9 @@
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .cost-row input {
@@ -608,9 +764,9 @@
   }
   
   .transaction-btn, .edit-btn, .ai-waste-btn, .ai-donation-btn, .delete-btn {
-    min-width: 12px;
-    height: 12px;
-    font-size: 0.55rem;
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
     padding: 0;
     border: none;
   }

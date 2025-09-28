@@ -171,54 +171,57 @@ def predict():
         }])
         df["cuisine"] = df["cuisine"].astype("category")
         df["category"] = df["category"].astype("category")
-
-
+        
+        # Make prediction
+        pred = model.predict(df)
+        scale_factor = 1 / (dish_price / 10 + 1)  
+        predicted_orders = round(float(pred[0]) * scale_factor)    
+        
+        # Calculate total price for all orders
+        total_price = final_price * predicted_orders
+        
+        # Save to database
+        conn = sqlite3.connect('demand_history.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO demand_calculations 
+            (dish_name, dish_price, major_ingredients, category, cuisine, 
+             emailed_in_promotions, featured_on_homepage, discount_applied, 
+             discount_percentage, city_name, center_type, predicted_orders, 
+             final_price, total_price, discount_amount)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get("dishName", ""),
+            dish_price,
+            data.get("majorIngredients", ""),
+            data.get("category", ""),
+            data.get("cuisine", ""),
+            data.get("emailedInPromotions", False),
+            data.get("featuredOnHomepage", False),
+            data.get("discountApplied", False),
+            data.get("discountPercentage", 0),
+            data.get("cityName", ""),
+            data.get("centerType", ""),
+            predicted_orders,
+            final_price,
+            total_price,
+            discount_amount
+        ))
+        calculation_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "predictedOrders": predicted_orders,
+            "finalPrice": round(final_price, 2),
+            "discountAmount": round(discount_amount, 2),
+            "calculationId": calculation_id
+        })
+        
     except Exception as e:
         print("Prediction error:", e)
         return jsonify({"error": str(e)}), 500
-    pred = model.predict(df)
-    scale_factor = 1 / (dish_price / 10 + 1)  
-    predicted_orders = round(float(pred[0]) * scale_factor)    
-    # Save to database
-    conn = sqlite3.connect('demand_history.db')
-    cursor = conn.cursor()
-    # Calculate total price for all orders
-    total_price = final_price * predicted_orders
-    
-    cursor.execute('''
-        INSERT INTO demand_calculations 
-        (dish_name, dish_price, major_ingredients, category, cuisine, 
-         emailed_in_promotions, featured_on_homepage, discount_applied, 
-         discount_percentage, city_name, center_type, predicted_orders, 
-         final_price, total_price, discount_amount)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        data.get("dishName", ""),
-        dish_price,
-        data.get("majorIngredients", ""),
-        data.get("category", ""),
-        data.get("cuisine", ""),
-        data.get("emailedInPromotions", False),
-        data.get("featuredOnHomepage", False),
-        data.get("discountApplied", False),
-        data.get("discountPercentage", 0),
-        data.get("cityName", ""),
-        data.get("centerType", ""),
-        predicted_orders,
-        final_price,
-        total_price,
-        discount_amount
-    ))
-    calculation_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return jsonify({
-        "predictedOrders": predicted_orders,
-        "finalPrice": round(final_price, 2),
-        "discountAmount": round(discount_amount, 2),
-        "calculationId": calculation_id
-    })
 
 
 @app.route("/api/analyze-ingredients", methods=["POST"])
@@ -245,27 +248,45 @@ def analyze_ingredients():
             
             IMPORTANT: Calculate the TOTAL amount needed for ALL {predicted_orders} orders combined, not per individual order.
             
-            Please provide:
-            1. Complete list of ingredients needed for this dish
-            2. TOTAL quantities for each ingredient needed for {predicted_orders} orders (in standard units like cups, pounds, etc.)
-            3. Any special considerations or substitutions
-            4. Storage requirements for each ingredient
+            STANDARD SERVING SIZES FOR COMMON DISHES:
+            - Pasta dishes: 0.25-0.33 lbs pasta per serving, 0.15-0.25 lbs protein, 0.1-0.15 lbs vegetables
+            - Pizza: 0.2-0.3 lbs dough per pizza, 0.1-0.15 lbs cheese, 0.05-0.1 lbs sauce
+            - Chicken dishes: 0.4-0.6 lbs chicken per serving, 0.1-0.2 lbs vegetables, 0.05-0.1 lbs sauce
+            - Rice dishes: 0.2-0.3 lbs rice per serving, 0.2-0.4 lbs protein, 0.1-0.2 lbs vegetables
+            - Salads: 0.2-0.3 lbs greens per serving, 0.1-0.2 lbs protein, 0.05-0.1 lbs dressing
+            - Soups: 0.3-0.5 lbs total ingredients per serving
+            - Sandwiches: 0.2-0.3 lbs bread, 0.15-0.25 lbs protein, 0.05-0.1 lbs vegetables
             
-            Example: If one order needs 0.5 lbs chicken, then {predicted_orders} orders need {predicted_orders * 0.5} lbs chicken total.
-            Another example: If one order needs 1 cup rice, then {predicted_orders} orders need {predicted_orders} cups rice total.
+            CALCULATION RULES:
+            1. Use the standard serving sizes above as a baseline
+            2. Multiply each ingredient by {predicted_orders} to get total needed
+            3. Add 10-15% buffer for preparation waste and portioning
+            4. Round to reasonable decimal places (0.1 for small amounts, 1 for large amounts)
+            5. Use standard units: lbs for proteins/vegetables, cups for liquids, pieces for whole items
+            
+            EXAMPLE CALCULATIONS:
+            - For {predicted_orders} chicken parmesan orders: {predicted_orders} × 0.5 lbs chicken = {predicted_orders * 0.5} lbs chicken total
+            - For {predicted_orders} pasta orders: {predicted_orders} × 0.3 lbs pasta = {predicted_orders * 0.3} lbs pasta total
+            - For {predicted_orders} pizza orders: {predicted_orders} × 0.25 lbs dough = {predicted_orders * 0.25} lbs dough total
             
             Format your response as a JSON object with the following structure:
             {{
                 "ingredients": [
                     {{
                         "name": "ingredient name",
-                        "quantity": "TOTAL amount needed for all orders",
+                        "quantity": 123.45,
                         "unit": "measurement unit",
                         "storage": "storage requirements",
                         "notes": "any special notes"
                     }}
                 ]
             }}
+            
+            IMPORTANT: 
+            - The "quantity" field should be a NUMBER only (no units)
+            - Use realistic serving sizes based on the dish type
+            - Include all essential ingredients for the dish
+            - Provide reasonable quantities that make sense for {predicted_orders} orders
             """
         else:
             # If no dish name, analyze based on provided ingredients and measurements
@@ -277,37 +298,62 @@ def analyze_ingredients():
             
             IMPORTANT: Calculate the TOTAL amount needed for ALL {predicted_orders} orders combined, not per individual order.
             
+            STANDARD SERVING SIZES FOR COMMON INGREDIENTS:
+            - Proteins (chicken, beef, fish): 0.4-0.6 lbs per serving
+            - Pasta/Rice: 0.2-0.3 lbs per serving
+            - Vegetables: 0.1-0.2 lbs per serving
+            - Cheese: 0.05-0.1 lbs per serving
+            - Sauce: 0.05-0.1 cups per serving
+            - Bread: 0.1-0.2 lbs per serving
+            
+            CALCULATION RULES:
+            1. Parse the provided ingredients and any measurements mentioned
+            2. If measurements are provided, use them as-is and multiply by {predicted_orders}
+            3. If no measurements are provided, use standard serving sizes above
+            4. Add 10-15% buffer for preparation waste and portioning
+            5. Round to reasonable decimal places (0.1 for small amounts, 1 for large amounts)
+            6. Use standard units: lbs for proteins/vegetables, cups for liquids, pieces for whole items
+            
+            EXAMPLE CALCULATIONS:
+            - If provided "2 lbs chicken" for {predicted_orders} orders: 2 lbs × {predicted_orders} = {2 * predicted_orders} lbs chicken total
+            - If provided "chicken" (no amount) for {predicted_orders} orders: 0.5 lbs × {predicted_orders} = {predicted_orders * 0.5} lbs chicken total
+            - If provided "1 cup rice" for {predicted_orders} orders: 1 cup × {predicted_orders} = {predicted_orders} cups rice total
+            
             Please:
             1. Parse the provided ingredients and any measurements mentioned
             2. Calculate the TOTAL quantities needed for {predicted_orders} orders (multiply by {predicted_orders})
             3. Add any missing essential ingredients that would typically be needed
             4. Provide storage requirements and preparation notes
             
-            Example: If you have "2 lbs chicken" and need {predicted_orders} orders, calculate how much chicken is needed total for all orders.
-            
             Format your response as a JSON object with the following structure:
             {{
                 "ingredients": [
                     {{
                         "name": "ingredient name",
-                        "quantity": "TOTAL amount needed for all orders",
+                        "quantity": 123.45,
                         "unit": "measurement unit",
                         "storage": "storage requirements",
                         "notes": "any special notes"
                     }}
                 ]
             }}
+            
+            IMPORTANT: 
+            - The "quantity" field should be a NUMBER only (no units)
+            - Use realistic serving sizes based on the ingredient type
+            - Include all essential ingredients for a complete dish
+            - Provide reasonable quantities that make sense for {predicted_orders} orders
             """
         
         client = openai.OpenAI(api_key=openai.api_key)
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a professional restaurant inventory management expert with deep knowledge of food preparation, ingredient quantities, and cost estimation."},
+                {"role": "system", "content": "You are a professional restaurant inventory management expert with deep knowledge of food preparation, ingredient quantities, and cost estimation. You always provide realistic, consistent ingredient amounts based on standard restaurant serving sizes. You never make up unrealistic quantities and always follow the provided serving size guidelines."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=1000,
-            temperature=0.3
+            temperature=0.1
         )
         
         # Parse the response
@@ -350,7 +396,7 @@ def analyze_ingredients():
                 "ingredients": [],
                 "error": "No structured data found in response"
             })
-            
+
     except Exception as e:
         print(f"Error in analyze_ingredients: {e}")
         return jsonify({"error": str(e)}), 500
@@ -425,6 +471,12 @@ def chat_with_ai():
         - Always ask for missing cost information before completing add_item actions
         - Only include expiration_date in data if explicitly provided by user
 
+        DONATION DETECTION:
+        - When users say things like "I just donated X amount of Y" or "I donated Y to Z", automatically record this as a donation transaction
+        - Look for phrases like: "donated", "gave away", "donated to", "gave to food bank", "donated to charity"
+        - Extract the item name and quantity from the user's statement
+        - Record the donation transaction immediately to track it in the charts
+
         Action types:
         - "add_item": Add new inventory items
         - "update_quantity": Modify existing item quantities
@@ -446,6 +498,22 @@ def chat_with_ai():
                         "max_quantity": 100,
                         "storage_location": "Freezer",
                         "notes": "Added via AI assistant"
+                    }}
+                }}
+            ]
+        }}
+
+        Example for donation transaction:
+        {{
+            "response": "I've recorded your donation of 10 pounds of chicken breast. This will be tracked in your inventory and reflected in the donation charts.",
+            "actions": [
+                {{
+                    "type": "record_transaction",
+                    "data": {{
+                        "name": "Chicken Breast",
+                        "transaction_type": "donation",
+                        "quantity": 10,
+                        "notes": "Donated to food bank"
                     }}
                 }}
             ]
@@ -1246,14 +1314,21 @@ def add_inventory_transaction(item_id):
     """Add inventory transaction (usage, waste, purchase)"""
     try:
         data = request.get_json()
-        transaction_type = data.get('type')  # 'usage', 'waste', 'purchase', 'donation'
+        print(f"DEBUG: Received transaction data: {data}")  # Debug log
+        
+        # Handle both old and new field names for compatibility
+        transaction_type = data.get('transaction_type') or data.get('type')  # 'usage', 'waste', 'purchase', 'donation'
         quantity = data.get('quantity', 0)
         cost = data.get('cost', 0)
         notes = data.get('notes', '')
         date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
         
+        print(f"DEBUG: Parsed transaction_type: {transaction_type}, quantity: {quantity}, cost: {cost}")
+        
         conn = sqlite3.connect('demand_history.db')
         cursor = conn.cursor()
+        
+        print(f"DEBUG: Adding transaction for item_id: {item_id}")
         
         # Add transaction
         cursor.execute('''
@@ -1262,15 +1337,20 @@ def add_inventory_transaction(item_id):
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (item_id, transaction_type, quantity, cost, notes, date))
         
+        print(f"DEBUG: Transaction inserted successfully")
+        
         # Update inventory quantity
         if transaction_type in ['usage', 'waste', 'donation']:
+            print(f"DEBUG: Updating inventory - subtracting {quantity} from item {item_id}")
             # Subtract from current quantity
             cursor.execute('''
                 UPDATE inventory 
                 SET current_quantity = current_quantity - ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (quantity, item_id))
+            print(f"DEBUG: Inventory updated - subtracted {quantity}")
         elif transaction_type == 'purchase':
+            print(f"DEBUG: Updating inventory - adding {quantity} to item {item_id}")
             # Add to current quantity
             cursor.execute('''
                 UPDATE inventory 
@@ -1279,11 +1359,85 @@ def add_inventory_transaction(item_id):
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (quantity, cost/quantity if quantity > 0 else 0, cost, item_id))
+            print(f"DEBUG: Inventory updated - added {quantity}")
         
         conn.commit()
         conn.close()
         
+        print(f"DEBUG: Transaction completed successfully")
         return jsonify({"message": f"{transaction_type.title()} transaction added successfully"})
+    except Exception as e:
+        print(f"DEBUG: Error in transaction: {str(e)}")
+        import traceback
+        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/debug/transaction", methods=["POST"])
+def debug_transaction():
+    """Debug endpoint to test transaction data"""
+    try:
+        data = request.get_json()
+        print(f"DEBUG: Raw request data: {data}")
+        print(f"DEBUG: Data type: {type(data)}")
+        print(f"DEBUG: Data keys: {list(data.keys()) if data else 'None'}")
+        
+        # Test each field
+        transaction_type = data.get('transaction_type') or data.get('type')
+        quantity = data.get('quantity', 0)
+        cost = data.get('cost', 0)
+        notes = data.get('notes', '')
+        date = data.get('date', '')
+        
+        print(f"DEBUG: transaction_type: {transaction_type} (type: {type(transaction_type)})")
+        print(f"DEBUG: quantity: {quantity} (type: {type(quantity)})")
+        print(f"DEBUG: cost: {cost} (type: {type(cost)})")
+        print(f"DEBUG: notes: {notes} (type: {type(notes)})")
+        print(f"DEBUG: date: {date} (type: {type(date)})")
+        
+        return jsonify({
+            "status": "success",
+            "parsed_data": {
+                "transaction_type": transaction_type,
+                "quantity": quantity,
+                "cost": cost,
+                "notes": notes,
+                "date": date
+            }
+        })
+    except Exception as e:
+        print(f"DEBUG: Error in debug endpoint: {str(e)}")
+        import traceback
+        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/debug/database", methods=["GET"])
+def debug_database():
+    """Debug endpoint to check database status"""
+    try:
+        conn = sqlite3.connect('demand_history.db')
+        cursor = conn.cursor()
+        
+        # Check if tables exist
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()
+        table_names = [table[0] for table in tables]
+        
+        # Check inventory_transactions table structure
+        cursor.execute("PRAGMA table_info(inventory_transactions);")
+        columns = cursor.fetchall()
+        
+        # Check if there are any inventory items
+        cursor.execute("SELECT COUNT(*) FROM inventory;")
+        inventory_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            "status": "success",
+            "tables": table_names,
+            "inventory_transactions_columns": columns,
+            "inventory_count": inventory_count
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1410,11 +1564,18 @@ def get_weekly_trends():
                 week_data[week_num]['purchased'] += quantity
         
         # Convert to chart format, ensuring all 10 weeks are represented
+        # Week 1 = Current Week, Week 2 = Week -1, etc.
+        # Reverse order so Current Week appears on the right
         chart_data = []
-        for week_num in range(1, 11):
+        for week_num in range(10, 0, -1):  # Count backwards from 10 to 1
             week_info = week_data.get(week_num, {'used': 0, 'wasted': 0, 'donated': 0, 'purchased': 0})
+            if week_num == 1:
+                week_label = 'Current Week'
+            else:
+                week_label = f'Week -{week_num - 1}'
+            
             chart_data.append({
-                'week': f'Week {week_num}',
+                'week': week_label,
                 'used': round(week_info['used'], 2),
                 'wasted': round(week_info['wasted'], 2),
                 'donated': round(week_info['donated'], 2),
@@ -1483,11 +1644,18 @@ def get_financial_optimization():
             week_financial_data[week_num] = money_wasted
         
         # Convert to chart format, ensuring all 10 weeks are represented
+        # Week 1 = Current Week, Week 2 = Week -1, etc.
+        # Reverse order so Current Week appears on the right
         chart_data = []
-        for week_num in range(1, 11):
+        for week_num in range(10, 0, -1):  # Count backwards from 10 to 1
             money_wasted = week_financial_data.get(week_num, 0)
+            if week_num == 1:
+                week_label = 'Current Week'
+            else:
+                week_label = f'Week -{week_num - 1}'
+            
             chart_data.append({
-                'week': f'Week {week_num}',
+                'week': week_label,
                 'moneyWasted': round(money_wasted, 2)
             })
         
@@ -1523,6 +1691,209 @@ def test_analytics():
             "transaction_types": transaction_types
         })
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/analytics/this-week", methods=["GET"])
+def get_this_week_data():
+    """Get this week's data for pie chart (food used, wasted, donated)"""
+    try:
+        conn = sqlite3.connect('demand_history.db')
+        cursor = conn.cursor()
+        
+        print("DEBUG: Starting this week's data query")
+        
+        # Get data for this week (last 7 days)
+        cursor.execute('''
+            SELECT 
+                transaction_type,
+                SUM(quantity) as total_quantity
+            FROM inventory_transactions it
+            LEFT JOIN inventory i ON it.inventory_id = i.id
+            WHERE julianday('now') - julianday(it.date) <= 7
+            AND transaction_type IN ('usage', 'waste', 'donation')
+            GROUP BY transaction_type
+        ''')
+        
+        week_data = cursor.fetchall()
+        print(f"DEBUG: This week query returned {len(week_data)} rows")
+        print(f"DEBUG: Raw this week data: {week_data}")
+        
+        conn.close()
+        
+        # Format data for pie chart
+        pie_data = []
+        total_quantity = 0
+        
+        # Create a dictionary to store the data
+        week_totals = {'usage': 0, 'waste': 0, 'donation': 0}
+        
+        for row in week_data:
+            transaction_type = row[0]
+            quantity = row[1]
+            week_totals[transaction_type] = quantity
+            total_quantity += quantity
+        
+        # Convert to pie chart format
+        if total_quantity > 0:
+            pie_data = [
+                {
+                    'name': 'Food Used',
+                    'value': round(week_totals['usage'], 2),
+                    'color': '#10B981'
+                },
+                {
+                    'name': 'Food Wasted', 
+                    'value': round(week_totals['waste'], 2),
+                    'color': '#EF4444'
+                },
+                {
+                    'name': 'Food Donated',
+                    'value': round(week_totals['donation'], 2),
+                    'color': '#3B82F6'
+                }
+            ]
+        else:
+            # If no data, show empty state
+            pie_data = [
+                {
+                    'name': 'Food Used',
+                    'value': 0,
+                    'color': '#10B981'
+                },
+                {
+                    'name': 'Food Wasted',
+                    'value': 0, 
+                    'color': '#EF4444'
+                },
+                {
+                    'name': 'Food Donated',
+                    'value': 0,
+                    'color': '#3B82F6'
+                }
+            ]
+        
+        print(f"DEBUG: Final pie chart data: {pie_data}")
+        return jsonify(pie_data)
+    except Exception as e:
+        print(f"DEBUG: Error in this week's data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/analytics/most-wasted", methods=["GET"])
+def get_most_wasted_food():
+    """Get the most wasted food items this week"""
+    try:
+        conn = sqlite3.connect('demand_history.db')
+        cursor = conn.cursor()
+        
+        print("DEBUG: Starting most wasted food query")
+        
+        # Get most wasted food items this week (last 7 days)
+        cursor.execute('''
+            SELECT 
+                i.name,
+                i.unit,
+                SUM(it.quantity) as total_wasted,
+                i.cost_per_unit,
+                SUM(it.quantity * COALESCE(i.cost_per_unit, 0)) as total_cost_wasted
+            FROM inventory_transactions it
+            JOIN inventory i ON it.inventory_id = i.id
+            WHERE it.transaction_type = 'waste'
+            AND julianday('now') - julianday(it.date) <= 7
+            GROUP BY i.id, i.name, i.unit, i.cost_per_unit
+            ORDER BY total_wasted DESC
+            LIMIT 10
+        ''')
+        
+        wasted_data = cursor.fetchall()
+        print(f"DEBUG: Most wasted query returned {len(wasted_data)} rows")
+        print(f"DEBUG: Raw most wasted data: {wasted_data}")
+        
+        conn.close()
+        
+        # Format data for display
+        most_wasted = []
+        for row in wasted_data:
+            most_wasted.append({
+                'name': row[0],
+                'unit': row[1],
+                'quantity': round(row[2], 2),
+                'cost_per_unit': row[3] or 0,
+                'total_cost': round(row[4], 2)
+            })
+        
+        print(f"DEBUG: Final most wasted data: {most_wasted}")
+        return jsonify(most_wasted)
+    except Exception as e:
+        print(f"DEBUG: Error in most wasted food: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/analytics/raw-data/<int:week_number>", methods=["GET"])
+def get_raw_data_for_week(week_number):
+    """Get raw data for a specific week"""
+    try:
+        conn = sqlite3.connect('demand_history.db')
+        cursor = conn.cursor()
+        
+        print(f"DEBUG: Starting raw data query for week {week_number}")
+        
+        # Use the same week calculation method as other endpoints
+        # Week 1 = Current Week (0-7 days ago), Week 2 = Week -1 (8-14 days ago), etc.
+        days_ago_start = (week_number - 1) * 7
+        days_ago_end = week_number * 7
+        
+        # Get transaction data for the week using julianday calculation
+        cursor.execute('''
+            SELECT 
+                transaction_type,
+                SUM(quantity) as total_quantity,
+                SUM(quantity * COALESCE(i.cost_per_unit, 0)) as total_cost
+            FROM inventory_transactions it
+            LEFT JOIN inventory i ON it.inventory_id = i.id
+            WHERE julianday('now') - julianday(it.date) >= ?
+            AND julianday('now') - julianday(it.date) < ?
+            AND transaction_type IN ('usage', 'waste', 'donation')
+            GROUP BY transaction_type
+        ''', (days_ago_start, days_ago_end))
+        
+        week_data = cursor.fetchall()
+        print(f"DEBUG: Raw data query returned {len(week_data)} rows")
+        print(f"DEBUG: Raw week data: {week_data}")
+        
+        conn.close()
+        
+        # Process the data
+        week_totals = {'usage': 0, 'waste': 0, 'donation': 0, 'money_wasted': 0}
+        
+        for row in week_data:
+            transaction_type = row[0]
+            quantity = row[1]
+            cost = row[2]
+            
+            week_totals[transaction_type] = quantity
+            if transaction_type == 'waste':
+                week_totals['money_wasted'] = cost
+        
+        # Calculate percentages
+        total_food = week_totals['usage'] + week_totals['waste'] + week_totals['donation']
+        
+        if total_food > 0:
+            food_used_pct = round((week_totals['usage'] / total_food) * 100, 1)
+            food_wasted_pct = round((week_totals['waste'] / total_food) * 100, 1)
+            food_donated_pct = round((week_totals['donation'] / total_food) * 100, 1)
+        else:
+            food_used_pct = food_wasted_pct = food_donated_pct = 0
+        
+        raw_data = {
+            'food_used_pct': food_used_pct,
+            'food_wasted_pct': food_wasted_pct,
+            'food_donated_pct': food_donated_pct,
+            'money_wasted': round(week_totals['money_wasted'], 2)
+        }
+        
+        print(f"DEBUG: Final raw data: {raw_data}")
+        return jsonify(raw_data)
+    except Exception as e:
+        print(f"DEBUG: Error in raw data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/analytics/populate-sample-data", methods=["POST"])

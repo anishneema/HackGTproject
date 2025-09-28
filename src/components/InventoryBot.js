@@ -22,15 +22,28 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
   const [pendingAction, setPendingAction] = useState(null);
   const [showInfoForm, setShowInfoForm] = useState(false);
   const [missingInfo, setMissingInfo] = useState([]);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleScroll = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShouldAutoScroll(isNearBottom);
+    }
+  };
+
+  // Only scroll to bottom when bot is typing or when a bot message is added, and user is near bottom
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (shouldAutoScroll && (isTyping || (messages.length > 0 && messages[messages.length - 1].type === 'bot'))) {
+      scrollToBottom();
+    }
+  }, [messages, isTyping, shouldAutoScroll]);
 
   const handleSendMessage = async (message) => {
     if (!message.trim()) return;
@@ -49,7 +62,13 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
 
     try {
       // Check if the message is asking for inventory recommendations or donation advice
-      if (message.toLowerCase().includes('recommendation') || 
+      // But NOT if it's a statement about already completed donations
+      const isDonationStatement = message.toLowerCase().includes('i just donated') || 
+                                 message.toLowerCase().includes('i donated') ||
+                                 message.toLowerCase().includes('gave away') ||
+                                 message.toLowerCase().includes('donated to');
+      
+      if ((message.toLowerCase().includes('recommendation') || 
           message.toLowerCase().includes('suggest') ||
           message.toLowerCase().includes('donation') ||
           message.toLowerCase().includes('donate') ||
@@ -59,7 +78,7 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
           message.toLowerCase().includes('where should i') ||
           message.toLowerCase().includes('food bank') ||
           message.toLowerCase().includes('expiring') ||
-          message.toLowerCase().includes('expires')) {
+          message.toLowerCase().includes('expires')) && !isDonationStatement) {
         
         // Get AI recommendations with inventory context
         const response = await fetch("http://127.0.0.1:5000/api/inventory/ai-recommendations", {
@@ -187,6 +206,9 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
           // Refresh inventory to show changes
           setAiActions(prev => [...prev, { type: 'refresh', timestamp: Date.now() }]);
           
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+          
           // Show action results in chat
           const actionResults = result.actions_executed.map(action => {
             const status = action.success ? '✅' : '❌';
@@ -252,6 +274,9 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
         if (actionType === 'add_item' || actionType === 'record_transaction') {
           // Trigger inventory refresh by updating a state that the InventoryTable can watch
           setAiActions(prev => [...prev, { type: 'refresh', timestamp: Date.now() }]);
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('inventoryUpdated'));
         }
         
         return result;
@@ -303,6 +328,9 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
         
         // Refresh inventory
         setAiActions(prev => [...prev, { type: 'refresh', timestamp: Date.now() }]);
+        
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('inventoryUpdated'));
         
         // Clear pending action
         setPendingAction(null);
@@ -443,7 +471,11 @@ const InventoryBot = ({ currentPage, onPageChange }) => {
                 
               </div>
 
-              <div className="chat-messages">
+              <div 
+                className="chat-messages" 
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+              >
                 {messages.map((message) => (
                   <ChatMessage key={message.id} message={message} />
                 ))}

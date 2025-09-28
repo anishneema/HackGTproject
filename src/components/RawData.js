@@ -1,53 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './RawData.css';
 
 const RawData = () => {
-  const [selectedWeek, setSelectedWeek] = useState('Week 1');
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [weekData, setWeekData] = useState(null);
+  const [mostWasted, setMostWasted] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const rawData = {
-    'Week 1': {
-      totalOrders: 120,
-      foodUsed: 78,
-      foodWasted: 30,
-      foodDonated: 12,
-      moneyWasted: 150,
-      ingredients: ['Chicken: 45 lbs', 'Rice: 30 lbs', 'Vegetables: 25 lbs', 'Spices: 5 lbs']
-    },
-    'Week 2': {
-      totalOrders: 150,
-      foodUsed: 98,
-      foodWasted: 37,
-      foodDonated: 15,
-      moneyWasted: 180,
-      ingredients: ['Beef: 50 lbs', 'Pasta: 35 lbs', 'Vegetables: 30 lbs', 'Cheese: 8 lbs']
-    },
-    'Week 3': {
-      totalOrders: 180,
-      foodUsed: 117,
-      foodWasted: 45,
-      foodDonated: 18,
-      moneyWasted: 220,
-      ingredients: ['Fish: 55 lbs', 'Rice: 40 lbs', 'Vegetables: 35 lbs', 'Sauce: 10 lbs']
-    },
-    'Week 4': {
-      totalOrders: 160,
-      foodUsed: 104,
-      foodWasted: 40,
-      foodDonated: 16,
-      moneyWasted: 190,
-      ingredients: ['Pork: 48 lbs', 'Bread: 32 lbs', 'Vegetables: 28 lbs', 'Oil: 6 lbs']
-    },
-    'Week 5': {
-      totalOrders: 200,
-      foodUsed: 130,
-      foodWasted: 50,
-      foodDonated: 20,
-      moneyWasted: 250,
-      ingredients: ['Chicken: 60 lbs', 'Rice: 45 lbs', 'Vegetables: 40 lbs', 'Spices: 8 lbs']
+  const weekOptions = [
+    { value: 1, label: 'Current Week' },
+    { value: 2, label: 'Week -1' },
+    { value: 3, label: 'Week -2' },
+    { value: 4, label: 'Week -3' },
+    { value: 5, label: 'Week -4' }
+  ];
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch week data
+      const weekResponse = await fetch(`http://127.0.0.1:5000/api/analytics/raw-data/${selectedWeek}`);
+      if (weekResponse.ok) {
+        const weekDataResult = await weekResponse.json();
+        setWeekData(weekDataResult);
+      } else {
+        throw new Error('Failed to fetch week data');
+      }
+
+      // Fetch most wasted food (always for current week)
+      const wastedResponse = await fetch('http://127.0.0.1:5000/api/analytics/most-wasted');
+      if (wastedResponse.ok) {
+        const wastedData = await wastedResponse.json();
+        setMostWasted(wastedData);
+      } else {
+        throw new Error('Failed to fetch most wasted data');
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+      // Set fallback data
+      setWeekData({
+        food_used_pct: 0,
+        food_wasted_pct: 0,
+        food_donated_pct: 0,
+        money_wasted: 0
+      });
+      setMostWasted([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const currentData = rawData[selectedWeek];
+  useEffect(() => {
+    fetchData();
+  }, [selectedWeek]);
+
+  // Auto-refresh every 30 seconds to catch new transactions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedWeek]);
+
+  // Listen for storage events (when other tabs/components update data)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'inventory_updated') {
+        fetchData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events
+    const handleInventoryUpdate = () => {
+      fetchData();
+    };
+
+    window.addEventListener('inventoryUpdated', handleInventoryUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('inventoryUpdated', handleInventoryUpdate);
+    };
+  }, [selectedWeek]);
+
+  if (loading) {
+    return (
+      <div className="raw-data-container">
+        <div className="raw-data-header">
+          <h3 className="raw-data-title">Raw Data #'s</h3>
+        </div>
+        <div className="loading-message">Loading data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="raw-data-container">
+        <div className="raw-data-header">
+          <h3 className="raw-data-title">Raw Data #'s</h3>
+        </div>
+        <div className="error-message">Error loading data: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="raw-data-container">
@@ -55,48 +117,52 @@ const RawData = () => {
         <h3 className="raw-data-title">Raw Data #'s</h3>
         <select 
           value={selectedWeek} 
-          onChange={(e) => setSelectedWeek(e.target.value)}
+          onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
           className="week-selector"
         >
-          {Object.keys(rawData).map(week => (
-            <option key={week} value={week}>{week}</option>
+          {weekOptions.map(week => (
+            <option key={week.value} value={week.value}>{week.label}</option>
           ))}
         </select>
       </div>
       
       <div className="data-grid">
         <div className="data-card">
-          <h4>Total Orders</h4>
-          <p className="data-value">{currentData.totalOrders}</p>
-        </div>
-        
-        <div className="data-card">
           <h4>Food Used (%)</h4>
-          <p className="data-value">{currentData.foodUsed}%</p>
+          <p className="data-value">{weekData?.food_used_pct || 0}%</p>
         </div>
         
         <div className="data-card">
           <h4>Food Wasted (%)</h4>
-          <p className="data-value waste">{currentData.foodWasted}%</p>
+          <p className="data-value waste">{weekData?.food_wasted_pct || 0}%</p>
         </div>
         
         <div className="data-card">
           <h4>Food Donated (%)</h4>
-          <p className="data-value donated">{currentData.foodDonated}%</p>
+          <p className="data-value donated">{weekData?.food_donated_pct || 0}%</p>
         </div>
         
         <div className="data-card">
           <h4>Money Wasted</h4>
-          <p className="data-value money">${currentData.moneyWasted}</p>
+          <p className="data-value money">${weekData?.money_wasted || 0}</p>
         </div>
         
         <div className="data-card ingredients">
-          <h4>Ingredients Breakdown</h4>
-          <ul className="ingredients-list">
-            {currentData.ingredients.map((ingredient, index) => (
-              <li key={index}>{ingredient}</li>
-            ))}
-          </ul>
+          <h4>Most Wasted (This Week)</h4>
+          {mostWasted.length > 0 ? (
+            <ul className="ingredients-list">
+              {mostWasted.slice(0, 5).map((item, index) => (
+                <li key={index}>
+                  {item.name}: {item.quantity} {item.unit}
+                  {item.total_cost > 0 && (
+                    <span className="cost-info"> (${item.total_cost})</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-data">No waste data available for this week</p>
+          )}
         </div>
       </div>
     </div>

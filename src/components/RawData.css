@@ -42,8 +42,10 @@
 
 .data-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
+  justify-items: stretch;
+  align-items: start;
 }
 
 .data-card {
@@ -53,6 +55,11 @@
   text-align: center;
   border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .data-card:hover {
@@ -81,7 +88,7 @@
 }
 
 .data-value.donated {
-  color: #10b981;
+  color: #3b82f6;
 }
 
 .data-value.money {
@@ -91,6 +98,8 @@
 .data-card.ingredients {
   grid-column: 1 / -1;
   text-align: left;
+  max-width: none;
+  min-height: auto;
 }
 
 .data-card.ingredients h4 {
@@ -116,6 +125,30 @@
   color: #374151;
 }
 
+.cost-info {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.loading-message, .error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.error-message {
+  color: #ef4444;
+}
+
 @media (max-width: 768px) {
   .raw-data-container {
     padding: 1.5rem;
@@ -127,8 +160,9 @@
   }
   
   .data-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+    justify-items: stretch;
   }
   
   .data-value {
@@ -136,6 +170,12 @@
   }
   
   .ingredients-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-grid {
     grid-template-columns: 1fr;
   }
 }
