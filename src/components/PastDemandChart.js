@@ -5,6 +5,7 @@ const PastDemandChart = () => {
   const [demandHistory, setDemandHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recalculating, setRecalculating] = useState({});
+  const [deleting, setDeleting] = useState({});
 
   useEffect(() => {
     fetchDemandHistory();
@@ -60,6 +61,39 @@ const PastDemandChart = () => {
       alert('Error recalculating demand');
     } finally {
       setRecalculating(prev => ({ ...prev, [calculationId]: false }));
+    }
+  };
+
+  const handleDelete = async (calculationId) => {
+    if (!window.confirm('Are you sure you want to delete this demand calculation? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(prev => ({ ...prev, [calculationId]: true }));
+    
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/demand-history/${calculationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Remove the item from the history
+        setDemandHistory(prev => 
+          prev.filter(item => item.id !== calculationId)
+        );
+        alert('Demand calculation deleted successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to delete calculation: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting calculation:', error);
+      alert('Error deleting calculation');
+    } finally {
+      setDeleting(prev => ({ ...prev, [calculationId]: false }));
     }
   };
 
@@ -177,13 +211,23 @@ const PastDemandChart = () => {
                     </div>
                   </td>
                   <td className="actions">
-                    <button
-                      className="recalculate-btn"
-                      onClick={() => handleRecalculate(item.id)}
-                      disabled={recalculating[item.id]}
-                    >
-                      {recalculating[item.id] ? 'Recalculating...' : 'Recalculate'}
-                    </button>
+                    <div className="action-buttons">
+                      <button
+                        className="recalculate-btn"
+                        onClick={() => handleRecalculate(item.id)}
+                        disabled={recalculating[item.id]}
+                      >
+                        {recalculating[item.id] ? 'Recalculating...' : 'Recalculate'}
+                      </button>
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deleting[item.id]}
+                        title="Delete calculation"
+                      >
+                        {deleting[item.id] ? 'Deleting...' : '🗑️'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

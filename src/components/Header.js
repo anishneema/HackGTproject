@@ -31,18 +31,18 @@ const Header = ({ currentPage, onPageChange }) => {
             Demand
           </a>
           <a 
-            href="/chatbot" 
-            className={`nav-link ${currentPage === 'chatbot' ? 'active' : ''}`}
-            onClick={(e) => handleNavClick('chatbot', e)}
+            href="/inventory" 
+            className={`nav-link ${currentPage === 'inventory' ? 'active' : ''}`}
+            onClick={(e) => handleNavClick('inventory', e)}
           >
-            AI Assistant
+            Inventory
           </a>
           <a 
             href="/food-banks" 
             className={`nav-link ${currentPage === 'food-banks' ? 'active' : ''}`}
             onClick={(e) => handleNavClick('food-banks', e)}
           >
-            Donations
+            Food Banks
           </a>
         </nav>
       </div>

@@ -1,0 +1,617 @@
+.inventory-table-container {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.inventory-header h3 {
+  color: #1e40af;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.add-item-btn {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-item-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.no-inventory {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 2px dashed #d1d5db;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+
+.inventory-table thead {
+  background-color: #f8fafc;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.inventory-table th {
+  padding: 0 0.25rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  height: 16px;
+  line-height: 0.9;
+}
+
+.inventory-table td {
+  padding: 0 0.25rem;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  font-size: 0.8rem;
+  height: 16px;
+  line-height: 0.9;
+  margin: 0;
+}
+
+.inventory-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.inventory-table tbody tr.low-stock {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+.inventory-table tbody tr.overstock {
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.inventory-table tbody tr.expiring-soon {
+  background-color: #fef2f2;
+  border-left: 4px solid #dc2626;
+}
+
+.inventory-table tbody tr.expired {
+  background-color: #fecaca;
+  border-left: 4px solid #991b1b;
+}
+
+.item-name {
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.name-cell strong {
+  color: #1e40af;
+  font-size: 0.8rem;
+  display: inline;
+  margin-bottom: 0;
+  line-height: 0.9;
+}
+
+.storage-location {
+  font-size: 0.65rem;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 0.9;
+  margin-left: 0.25rem;
+  display: inline;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.05rem 0.25rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  background-color: #dbeafe;
+  color: #1e40af;
+  text-transform: capitalize;
+  line-height: 0.9;
+}
+
+.quantity {
+  text-align: center;
+  min-width: 80px;
+}
+
+.current-qty {
+  font-weight: 700;
+  color: #1e40af;
+  font-size: 0.8rem;
+  display: inline;
+  line-height: 0.9;
+}
+
+.unit {
+  font-size: 0.65rem;
+  color: #6b7280;
+  margin-left: 0.125rem;
+  display: inline;
+}
+
+.min-max-cell {
+  font-size: 0.7rem;
+  line-height: 0.9;
+}
+
+.min, .max {
+  display: inline;
+  margin-right: 0.25rem;
+}
+
+.min {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.max {
+  color: #059669;
+  font-weight: 500;
+}
+
+.cost-per-unit, .total-value {
+  text-align: right;
+  font-weight: 600;
+  color: #059669;
+  min-width: 60px;
+  font-size: 0.75rem;
+  line-height: 0.9;
+}
+
+.expiration {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #6b7280;
+  min-width: 70px;
+  line-height: 0.9;
+}
+
+.actions {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.05rem 0.25rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+}
+
+.status-badge.normal {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.low-stock {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.overstock {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.expiring-soon {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.status-badge.expired {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.transaction-btn, .edit-btn, .ai-waste-btn, .ai-donation-btn, .delete-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.65rem;
+  min-width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0.9;
+}
+
+.transaction-btn:hover, .edit-btn:hover {
+  opacity: 0.7;
+}
+
+.ai-waste-btn {
+  color: #ef4444;
+}
+
+.ai-waste-btn:hover {
+  opacity: 0.7;
+}
+
+.ai-donation-btn {
+  color: #10b981;
+}
+
+.ai-donation-btn:hover {
+  opacity: 0.7;
+}
+
+.delete-btn {
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  opacity: 0.7;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h3 {
+  color: #1e40af;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row:last-of-type {
+  grid-template-columns: 1fr;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.form-row textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.cost-row {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cost-row input {
+  background-color: #ffffff;
+  border: 1px solid #10b981;
+  color: #059669;
+  font-weight: 600;
+}
+
+.cost-row input:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Dialog Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.modal-content form {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.disabled-input {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.submit-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.waste-btn {
+  background-color: #dc2626;
+}
+
+.waste-btn:hover {
+  background-color: #b91c1c;
+}
+
+.donation-btn {
+  background-color: #059669;
+}
+
+.donation-btn:hover {
+  background-color: #047857;
+}
+
+.cancel-btn {
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 0.75rem;
+}
+
+.cancel-btn:hover {
+  background-color: #4b5563;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.form-actions button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-actions button[type="button"] {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.form-actions button[type="button"]:hover {
+  background-color: #e5e7eb;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #1e40af;
+  color: #ffffff;
+  border: none;
+}
+
+.form-actions button[type="submit"]:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+@media (max-width: 768px) {
+  .inventory-table-container {
+    padding: 1rem;
+  }
+  
+  .inventory-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    padding: 0 0.125rem;
+    font-size: 0.65rem;
+    height: 14px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  
+  .transaction-btn, .edit-btn, .ai-waste-btn, .ai-donation-btn, .delete-btn {
+    min-width: 12px;
+    height: 12px;
+    font-size: 0.55rem;
+    padding: 0;
+    border: none;
+  }
+}

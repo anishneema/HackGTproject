@@ -14,7 +14,7 @@ function App() {
         return <AnalyticsDashboard currentPage={currentPage} onPageChange={setCurrentPage} />;
       case 'demand':
         return <DemandCalculator currentPage={currentPage} onPageChange={setCurrentPage} />;
-      case 'chatbot':
+      case 'inventory':
         return <InventoryBot currentPage={currentPage} onPageChange={setCurrentPage} />;
       case 'food-banks':
         return <FoodBanks currentPage={currentPage} onPageChange={setCurrentPage} />;

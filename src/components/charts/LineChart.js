@@ -1,24 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './LineChart.css';
 
 const LineChart = () => {
-  const data = [
-    { week: 'Week 1', moneyWasted: 150 },
-    { week: 'Week 2', moneyWasted: 180 },
-    { week: 'Week 3', moneyWasted: 220 },
-    { week: 'Week 4', moneyWasted: 190 },
-    { week: 'Week 5', moneyWasted: 250 },
-    { week: 'Week 6', moneyWasted: 280 },
-    { week: 'Week 7', moneyWasted: 320 },
-    { week: 'Week 8', moneyWasted: 300 },
-    { week: 'Week 9', moneyWasted: 350 },
-    { week: 'Week 10', moneyWasted: 380 }
-  ];
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/analytics/financial-optimization');
+        if (response.ok) {
+          const chartData = await response.json();
+          setData(chartData);
+        } else {
+          throw new Error('Failed to fetch financial optimization data');
+        }
+      } catch (err) {
+        console.error('Error fetching financial data:', err);
+        setError(err.message);
+        // Fallback to sample data if API fails
+        setData([
+          { week: 'Week 1', moneyWasted: 0 },
+          { week: 'Week 2', moneyWasted: 0 },
+          { week: 'Week 3', moneyWasted: 0 },
+          { week: 'Week 4', moneyWasted: 0 },
+          { week: 'Week 5', moneyWasted: 0 },
+          { week: 'Week 6', moneyWasted: 0 },
+          { week: 'Week 7', moneyWasted: 0 },
+          { week: 'Week 8', moneyWasted: 0 },
+          { week: 'Week 9', moneyWasted: 0 },
+          { week: 'Week 10', moneyWasted: 0 }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFinancialData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="line-chart-container">
+        <h3 className="chart-title">Financial Optimization</h3>
+        <div className="chart-wrapper">
+          <div className="loading-message">Loading financial data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="line-chart-container">
+        <h3 className="chart-title">Financial Optimization</h3>
+        <div className="chart-wrapper">
+          <div className="error-message">Error loading data: {error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="line-chart-container">
-      <h3 className="chart-title">Financial Optimization</h3>
+      <h3 className="chart-title">Financial Optimization (Last 10 Weeks)</h3>
       <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height={300}>
           <RechartsLineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
